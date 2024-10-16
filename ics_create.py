@@ -1,18 +1,17 @@
 from ics import Calendar, Event
-from datetime import datetime
 
 # Create a calendar
 c = Calendar()
 
 # List of events with detailed parameters (name, day, month, year, start_time, end_time, recurrence)
-events = [
+events_example = [
     {
         "name": "Someone's Birthday",
         "day": 13,
         "month": 5,
         "year": 2024,
         "start_time": "09:00",  # Optional, defaults to 09:00
-        "end_time": "12:00",    # Optional, defaults to 12:00
+        "end_time": "12:00",  # Optional, defaults to 12:00
         "recurrence": "YEARLY"  # Recurrence can be 'YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', or None
     },
     {
@@ -45,6 +44,11 @@ events = [
     # Add more events as needed
 ]
 
+events = [
+
+]
+
+
 # Function to add recurrence rules based on the user's input
 def add_recurrence_rule(event, e):
     recurrence = event.get("recurrence")  # Safely get recurrence or None if missing
@@ -59,6 +63,7 @@ def add_recurrence_rule(event, e):
         e.repeat = "DAILY"
     else:
         pass  # No recurrence for one-time events
+
 
 # Iterate over the events and add them to the calendar
 for event in events:

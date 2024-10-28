@@ -1,14 +1,16 @@
+import re
 from datetime import datetime, timedelta
 
 import pytz
-from ics import Calendar, Event
-from ics.grammar.parse import ContentLine  # Import ContentLine
+from icalendar import Calendar, Event, Alarm
 
 # Define Bratislava timezone
 bratislava_tz = pytz.timezone("Europe/Bratislava")
 
 # Create a calendar
-c = Calendar()
+cal = Calendar()
+cal.add('prodid', '-//Your Product//Your Calendar//EN')
+cal.add('version', '2.0')
 
 events_example = [{
     "name": "Someone's Birthday",  # Mandatory: Name of the event, a descriptive title for the event.
@@ -37,80 +39,121 @@ events_example = [{
     #   - "PT5M": Alert 5 minutes before the event.
     #   - "PT30M": Alert 30 minutes before the event.
     #   - "P1D": Alert 1 day before the event.
+    #   - "P6M": Alert 6 months before the event.
+    #   - "P2W3DT4H30M": Alert 2 weeks, 3 days, 4 hours, and 30 minutes before the event.
+    #   - "PT45S": Alert 45 seconds before the event.
     # You can add multiple alerts as needed.
 }]
 
-# Events list
 events = [
-    {"name": "Test1", "day": 29, "month": 10, "year": 2024, "start_time": "08:00", "end_time": "11:00",
-     "recurrence": "YEARLY", "alerts": ["PT0M", "P1D"]},
-    {"name": "Test2_fullday", "day": 30, "month": 10, "year": 2024, "recurrence": "MONTHLY", "alerts": ["PT0M"],
-     "is_all_day": True},
+    {
+        "name": "Test1",
+        "day": 28,
+        "month": 10,
+        "year": 2024,
+        "start_time": "13:07",
+        "end_time": "14:00",
+        "recurrence": "YEARLY",
+        "alerts": ["PT0M", "PT5M", "PT30M", "P1D"],
+        "is_all_day": False
+
+    },
     # Add more events as needed
 ]
 
 
-# Function to add recurrence rules based on the user's input
-def add_recurrence_rule(event, e):
-    recurrence = event.get("recurrence")
-    if recurrence:
-        e.extra.append(ContentLine(name='RRULE', params={}, value=f'FREQ={recurrence}'))
+# Function to parse ISO 8601 duration to timedelta
+def parse_iso_duration(duration):
+    # Supports durations like 'PT30M', 'P1D', 'PT1H30M', etc.
+    days = 0
+    hours = 0
+    minutes = 0
+    seconds = 0
 
-
-# Function to add alerts based on specified times
-def add_alerts(event, e):
-    alerts = event.get("alerts", [])
-    for alert in alerts:
-        # Calculate alert time based on the event start time
-        if alert.startswith("P") and alert.endswith("D"):  # Handle days format like "P1D"
-            days = int(alert[1:-1])  # Extract number of days
-            alert_time = e.begin - timedelta(days=days)
-        elif alert.startswith("PT") and alert.endswith("M"):  # Handle minutes format like "PT5M"
-            minutes = int(alert[2:-1])  # Extract number of minutes
-            alert_time = e.begin - timedelta(minutes=minutes)
+    if duration.startswith('P'):
+        duration = duration[1:]
+        time_part = ''
+        if 'T' in duration:
+            date_part, time_part = duration.split('T')
         else:
-            alert_time = e.begin  # Default to event start time if format is unrecognized
+            date_part = duration
 
-        # Add the alert as a description for now since ics library doesn't support native VALARM
-        e.description = (e.description or "") + f"\nAlert set for {alert_time}"
+        # Parse date part
+        if date_part:
+            match = re.match(r'(?:(\d+)D)?', date_part)
+            if match:
+                days = int(match.group(1)) if match.group(1) else 0
+
+        # Parse time part
+        if time_part:
+            match = re.match(r'(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', time_part)
+            if match:
+                hours = int(match.group(1)) if match.group(1) else 0
+                minutes = int(match.group(2)) if match.group(2) else 0
+                seconds = int(match.group(3)) if match.group(3) else 0
+
+    return timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
 
 # Iterate over the events and add them to the calendar
 for event in events:
-    e = Event()
-    e.name = event["name"]
+    try:
+        vevent = Event()
+        vevent.add('summary', event["name"])
 
-    # Handle all-day events
-    if event.get("is_all_day", False):
-        # Set the date without time or timezone for all-day events
-        e.begin = datetime(event["year"], event["month"], event["day"])
-        e.make_all_day()
-    else:
-        # Provide default start and end times if not present
-        start_time = event.get("start_time", "09:00")
-        end_time = event.get("end_time", "12:00")
+        # Handle all-day events
+        if event.get("is_all_day", False):
+            # Set the date without time or timezone for all-day events
+            dt_start = datetime(event["year"], event["month"], event["day"]).date()
+            vevent.add('dtstart', dt_start)
+            vevent.add('dtend', dt_start + timedelta(days=1))  # All-day events end on the next day
+        else:
+            # Provide default start and end times if not present
+            start_time = event.get("start_time", "09:00")
+            end_time = event.get("end_time", "12:00")
 
-        # Format the start and end times with the given year, month, and day in the Bratislava timezone
-        start_datetime = datetime.strptime(f'{event["year"]}-{event["month"]:02d}-{event["day"]:02d} {start_time}',
-                                           "%Y-%m-%d %H:%M")
-        end_datetime = datetime.strptime(f'{event["year"]}-{event["month"]:02d}-{event["day"]:02d} {end_time}',
-                                         "%Y-%m-%d %H:%M")
+            # Format the start and end times with the given year, month, and day in the Bratislava timezone
+            start_datetime = datetime.strptime(
+                f'{event["year"]}-{event["month"]:02d}-{event["day"]:02d} {start_time}',
+                "%Y-%m-%d %H:%M"
+            )
+            end_datetime = datetime.strptime(
+                f'{event["year"]}-{event["month"]:02d}-{event["day"]:02d} {end_time}',
+                "%Y-%m-%d %H:%M"
+            )
 
-        # Set timezone to Bratislava
-        e.begin = bratislava_tz.localize(start_datetime)
-        e.end = bratislava_tz.localize(end_datetime)
+            # Set timezone to Bratislava
+            start_datetime = bratislava_tz.localize(start_datetime)
+            end_datetime = bratislava_tz.localize(end_datetime)
 
-    # Add recurrence if specified
-    add_recurrence_rule(event, e)
+            vevent.add('dtstart', start_datetime)
+            vevent.add('dtend', end_datetime)
 
-    # Add alerts if specified
-    add_alerts(event, e)
+        # Add recurrence if specified
+        recurrence = event.get("recurrence")
+        if recurrence:
+            vevent.add('rrule', {'FREQ': recurrence.upper()})
 
-    # Add the event to the calendar
-    c.events.add(e)
+        # Add alerts if specified
+        alerts = event.get("alerts", [])
+        for alert in alerts:
+            # Parse the ISO 8601 duration
+            trigger_timedelta = parse_iso_duration(alert)
+            # Create an alarm
+            alarm = Alarm()
+            alarm.add('action', 'DISPLAY')
+            alarm.add('description', f'Reminder: {event["name"]}')
+            # Set the trigger time (negative timedelta before the event)
+            alarm.add('trigger', -trigger_timedelta)
+            vevent.add_component(alarm)
+
+        # Add the event to the calendar
+        cal.add_component(vevent)
+    except Exception as e:
+        print(f"Error processing event '{event['name']}': {e}")
 
 # Save to a .ics file
-with open('output/Add_to_calendar.ics', 'w') as my_file:
-    my_file.write(c.serialize())
+with open('output/Add_to_calendar.ics', 'wb') as f:
+    f.write(cal.to_ical())
 
 print("Calendar saved with events and alerts.")

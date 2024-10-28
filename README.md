@@ -1,6 +1,6 @@
-Calendar Event Generator
+# Calendar Event Generator
 
-# Overview
+## Overview
 
 This is a Python project that generates .ics calendar files, which can be imported into any calendar application (compatible with macOS, Windows, iOS, Android, and Google Calendar). The script allows you to define multiple events, including recurring and one-time events, and automatically creates an .ics file containing these events.
 

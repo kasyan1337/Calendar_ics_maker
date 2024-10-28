@@ -1,24 +1,24 @@
 Calendar Event Generator
 
-Overview
+# Overview
 
 This is a Python project that generates .ics calendar files, which can be imported into any calendar application (compatible with macOS, Windows, iOS, Android, and Google Calendar). The script allows you to define multiple events, including recurring and one-time events, and automatically creates an .ics file containing these events.
 
-Key Features
+## Key Features
 
 	•	Supports yearly, monthly, weekly, and daily recurring events.
 	•	Customizable alerts in ISO 8601 format, including countdown alerts (e.g., PT10S to PT1S).
 	•	Automatically handles default start and end times if they are not provided.
 	•	Easy event customization: Simply modify the events list in the script.
 
-Requirements
+## Requirements
 
 To run this project, install the required Python dependencies listed in requirements.txt:
 ```bash
 pip install -r requirements.txt
 ``` 
 
-Usage
+## Usage
 
 Step 1: Edit the Events List
 
@@ -81,7 +81,7 @@ Step 4: Import the Generated .ics File
 
 The script generates a file named Add_to_calendar.ics in the output folder. You can import this file into any compatible calendar application.
 
-File Structure
+## File Structure
 
 calendar-event-generator/
 │
@@ -90,7 +90,7 @@ calendar-event-generator/
 ├── README.md             # Project documentation
 └── output/               # Folder where the .ics file is saved
 
-Event Configuration Details
+## Event Configuration Details
 
 	1.	Start and End Times: Defaults to 09:00 and 12:00, respectively, if not provided.
 	2.	Recurrence: Events without a specified recurrence are treated as one-time events. Valid recurrence options include:
@@ -104,7 +104,7 @@ Event Configuration Details
 "alerts": lambda: [f"PT{seconds}S" for seconds in range(10, 0, -1)]
 ``` 
 
-Important Notes
+## Important Notes
 
 	•	Only edit the events list: All customizations should be made in the events list. Do not modify code outside this list.
 	•	Avoid Duplicate Alerts: The script automatically removes duplicate alerts for each event.

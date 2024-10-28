@@ -1,62 +1,48 @@
-# Calendar Event Generator
+Calendar Event Generator
 
-## Overview
+Overview
 
-This is a Python project that generates `.ics` calendar files, which can be imported into any calendar application (compatible with macOS, Windows, iOS, Android, and Google Calendar). The script allows you to define multiple events, including recurring and one-time events, and automatically creates an `.ics` file containing these events.
+This is a Python project that generates .ics calendar files, which can be imported into any calendar application (compatible with macOS, Windows, iOS, Android, and Google Calendar). The script allows you to define multiple events, including recurring and one-time events, and automatically creates an .ics file containing these events.
 
-### Key Features:
-- Supports **yearly**, **monthly**, **weekly**, and **daily** recurring events.
-- Automatically handles **default start and end times** if they are not provided.
-- Simple and user-friendly customization: You only need to modify the `events` list in the script.
+Key Features
 
-## Requirements
+	•	Supports yearly, monthly, weekly, and daily recurring events.
+	•	Customizable alerts in ISO 8601 format, including countdown alerts (e.g., PT10S to PT1S).
+	•	Automatically handles default start and end times if they are not provided.
+	•	Easy event customization: Simply modify the events list in the script.
 
-To run this project, you'll need to install the required Python dependencies. The dependencies are listed in the `requirements.txt` file, and the primary library used is:
+Requirements
 
-- `ics` (for creating `.ics` calendar files)
-
-## Installation
-
-1. **Clone or download the repository**:
-   Download the project files to your local machine.
-
-2. **Install dependencies**:
-   Open a terminal or command prompt, navigate to the folder containing the project files, and run the following command to install the required dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-
-	3.	Run the script:
-To generate the .ics file, execute the script by running:
-
-python main.py
-
-This will create an .ics file with your events inside the output folder.
+To run this project, install the required Python dependencies listed in requirements.txt:
+```bash
+pip install -r requirements.txt
+``` 
 
 Usage
 
-Step 1: Edit the events list
+Step 1: Edit the Events List
 
-The only part of the script you should modify is the events list. This is where you define the events that you want to add to your calendar. Each event in the list is a dictionary with the following fields:
-
+Customize the events list to define the events you want in your calendar. Each event in the list is a dictionary with the following fields:
+``` 
 {
-    "name": "Event Name",           # (Required) The name or title of the event.
-    "day": 15,                      # (Required) The day of the event.
-    "month": 8,                     # (Required) The month of the event.
-    "year": 2024,                   # (Required) The year of the event.
-    "start_time": "14:00",          # (Optional) The start time of the event in HH:MM format. Defaults to "09:00" if not provided.
-    "end_time": "15:00",            # (Optional) The end time of the event in HH:MM format. Defaults to "12:00" if not provided.
-    "recurrence": "YEARLY"          # (Optional) Recurrence rule: can be 'YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', or None for no recurrence.
+    "name": "Event Name",           # (Required) Title of the event.
+    "day": 15,                      # (Required) Day of the event.
+    "month": 8,                     # (Required) Month of the event.
+    "year": 2024,                   # (Required) Year of the event.
+    "start_time": "14:00",          # (Optional) Start time in HH:MM format. Defaults to "09:00" if omitted.
+    "end_time": "15:00",            # (Optional) End time in HH:MM format. Defaults to "12:00" if omitted.
+    "recurrence": "YEARLY",         # (Optional) Recurrence rule: 'YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', or None for one-time events.
+    "is_all_day": False,            # (Optional) If True, sets event as all-day. Defaults to False.
+    "alerts": ["PT0M", "P1D"]       # (Optional) List of ISO 8601 durations for reminders (e.g., "PT5M" for 5 mins before).
 }
-
+``` 
 Step 2: Add or Modify Events
 
-	•	To add new events: Simply add new event dictionaries to the events list.
-	•	To modify existing events: You can edit the existing dictionaries in the events list by changing the values for name, day, month, year, start_time, end_time, or recurrence.
-	•	Do not modify the rest of the code: The script handles all the logic of generating the .ics file. You only need to edit the events list.
+	•	To add events: Simply add new event dictionaries to the events list.
+	•	To modify events: Update values in existing dictionaries (like name, day, month, etc.).
 
-Example of Adding Events:
-
+Example Event Entries:
+``` 
 events = [
     {
         "name": "Project Deadline",
@@ -84,48 +70,41 @@ events = [
         "recurrence": "YEARLY"  # This event recurs yearly
     }
 ]
-
+``` 
 Step 3: Run the Script
 
-Once you’ve edited the events list to include your desired events, run the script:
+After customizing the events list, generate the .ics file by running:
 
 python main.py
 
-Step 4: Output
+Step 4: Import the Generated .ics File
 
-The script will generate an .ics file containing your events and save it to the output folder. The output file will be named Add_to_calendar.ics. You can then open or import this file into your preferred calendar application.
+The script generates a file named Add_to_calendar.ics in the output folder. You can import this file into any compatible calendar application.
 
 File Structure
 
-Here is the structure of the project:
-
 calendar-event-generator/
 │
-├── main.py               # The main Python script to generate the .ics file
-├── requirements.txt      # The file containing the required Python libraries
-├── README.md             # This readme file
-└── output/               # Folder where the .ics file will be saved
+├── main.py               # Main Python script to generate the .ics file
+├── requirements.txt      # Python dependencies
+├── README.md             # Project documentation
+└── output/               # Folder where the .ics file is saved
 
-How the Script Works:
+Event Configuration Details
 
-	•	Start and End Times: If you don’t provide a start_time or end_time, the script will default to 09:00 and 12:00, respectively.
-	•	Recurrence: If you don’t specify a recurrence, the event will be a one-time event. Valid recurrence options include YEARLY, MONTHLY, WEEKLY, and DAILY.
-	•	Event Name: Every event must have a name, day, month, and year. These are mandatory.
+	1.	Start and End Times: Defaults to 09:00 and 12:00, respectively, if not provided.
+	2.	Recurrence: Events without a specified recurrence are treated as one-time events. Valid recurrence options include:
+	•	YEARLY
+	•	MONTHLY
+	•	WEEKLY
+	•	DAILY
+	3.	Alerts: Supports ISO 8601 duration formats such as PT10S, PT5M, P1D, etc., for customizable reminders.
+	4.	Countdown Alerts: To enable countdown alerts from 10 seconds before the event, set the alerts field using a lambda function:
+``` 
+"alerts": lambda: [f"PT{seconds}S" for seconds in range(10, 0, -1)]
+``` 
 
-Important:
+Important Notes
 
-	•	Do not modify anything outside the events list. The rest of the code handles all the necessary logic for generating the .ics file and should not be changed.
-	•	Only modify the events list to add, remove, or edit events.
-
-License
-
-This project is open-source and available under the MIT License.
-
----
-
-### Summary of Changes:
-1. The output file is now specified to be saved in the `output` folder.
-2. Detailed explanations were added about how to edit the `events` list and what users should not modify (i.e., the code outside of the events list).
-3. Clearer installation, usage, and structure explanations were provided to ensure that everything is easy to understand and follow.
-
-You can now copy this entire `README.md` into your project’s readme file and it will guide users through the process clearly and effectively. Let me know if you need further refinements!
+	•	Only edit the events list: All customizations should be made in the events list. Do not modify code outside this list.
+	•	Avoid Duplicate Alerts: The script automatically removes duplicate alerts for each event.

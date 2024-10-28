@@ -43,6 +43,10 @@ events_example = [{
     #   - "P2W3DT4H30M": Alert 2 weeks, 3 days, 4 hours, and 30 minutes before the event.
     #   - "PT45S": Alert 45 seconds before the event.
     # You can add multiple alerts as needed.
+
+    # COUNTDOWN
+    # "alerts": lambda: [f"PT{seconds}S" for seconds in range(10, 0, -1)],
+
 }]
 
 events = [
@@ -51,12 +55,11 @@ events = [
         "day": 28,
         "month": 10,
         "year": 2024,
-        "start_time": "13:07",
+        "start_time": "13:37",
         "end_time": "14:00",
         "recurrence": "YEARLY",
         "alerts": ["PT0M", "PT5M", "PT30M", "P1D"],
         "is_all_day": False
-
     },
     # Add more events as needed
 ]
@@ -65,34 +68,28 @@ events = [
 # Function to parse ISO 8601 duration to timedelta
 def parse_iso_duration(duration):
     # Supports durations like 'PT30M', 'P1D', 'PT1H30M', etc.
-    days = 0
-    hours = 0
-    minutes = 0
-    seconds = 0
-
-    if duration.startswith('P'):
-        duration = duration[1:]
-        time_part = ''
-        if 'T' in duration:
-            date_part, time_part = duration.split('T')
-        else:
-            date_part = duration
-
-        # Parse date part
-        if date_part:
-            match = re.match(r'(?:(\d+)D)?', date_part)
-            if match:
-                days = int(match.group(1)) if match.group(1) else 0
-
-        # Parse time part
-        if time_part:
-            match = re.match(r'(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', time_part)
-            if match:
-                hours = int(match.group(1)) if match.group(1) else 0
-                minutes = int(match.group(2)) if match.group(2) else 0
-                seconds = int(match.group(3)) if match.group(3) else 0
-
-    return timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+    pattern = re.compile(
+        r'P'  # starts with 'P'
+        r'(?:(?P<weeks>\d+)W)?'  # weeks
+        r'(?:(?P<days>\d+)D)?'  # days
+        r'(?:T'  # time part begins with 'T'
+        r'(?:(?P<hours>\d+)H)?'  # hours
+        r'(?:(?P<minutes>\d+)M)?'  # minutes
+        r'(?:(?P<seconds>\d+)S)?'  # seconds
+        r')?$'  # end of string
+    )
+    match = pattern.match(duration)
+    if not match:
+        return timedelta()
+    parts = match.groupdict()
+    time_params = {}
+    for (name, param) in parts.items():
+        if param:
+            if name == 'weeks':
+                time_params['days'] = time_params.get('days', 0) + int(param) * 7
+            else:
+                time_params[name] = int(param)
+    return timedelta(**time_params)
 
 
 # Iterate over the events and add them to the calendar
@@ -134,8 +131,19 @@ for event in events:
         if recurrence:
             vevent.add('rrule', {'FREQ': recurrence.upper()})
 
-        # Add alerts if specified
+        # Get alerts from the event
         alerts = event.get("alerts", [])
+        # If 'alerts' is callable (e.g., lambda function), call it to get the list
+        if callable(alerts):
+            alerts = alerts()
+        # Ensure 'alerts' is a list
+        if not isinstance(alerts, list):
+            alerts = [alerts]
+
+        # Remove duplicates if any
+        alerts = list(set(alerts))
+
+        # Add alerts if specified
         for alert in alerts:
             # Parse the ISO 8601 duration
             trigger_timedelta = parse_iso_duration(alert)
